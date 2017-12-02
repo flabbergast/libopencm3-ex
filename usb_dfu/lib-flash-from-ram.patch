@@ -1,0 +1,101 @@
+diff --git a/include/libopencm3/stm32/l0/flash.h b/include/libopencm3/stm32/l0/flash.h
+index 3716300..c2179c3 100644
+--- a/include/libopencm3/stm32/l0/flash.h
++++ b/include/libopencm3/stm32/l0/flash.h
+@@ -70,6 +70,14 @@
+ #define FLASH_OPTR_RDPRT_LEVEL_1	(0x00)
+ #define FLASH_OPTR_RDPRT_LEVEL_2	(0xcc)
+ 
++/* --- RAM functions workaround -------------------------------------------- */
++
++#if defined(L0_FLASH_FNS_FROM_RAM) && L0_FLASH_FNS_FROM_RAM
++#define __FROM_RAM __attribute__((__long_call__,section(".data")))
++#else
++#define __FROM_RAM
++#endif
++
+ /* --- Function prototypes ------------------------------------------------- */
+ 
+ BEGIN_DECLS
+diff --git a/lib/stm32/l0/Makefile b/lib/stm32/l0/Makefile
+index 8ed6779..a29a5ad 100644
+--- a/lib/stm32/l0/Makefile
++++ b/lib/stm32/l0/Makefile
+@@ -20,6 +20,8 @@
+ LIBNAME		= libopencm3_stm32l0
+ SRCLIBDIR	?= ../..
+ 
++FLASH_FROM_RAM ?= 0
++
+ PREFIX		?= arm-none-eabi
+ #PREFIX		?= arm-elf
+ CC		= $(PREFIX)-gcc
+@@ -30,7 +32,8 @@ TGT_CFLAGS	= -Os \
+ 		  -Wundef -Wshadow \
+ 		  -I../../../include -fno-common \
+ 		  -mcpu=cortex-m0plus $(FP_FLAGS) -mthumb -Wstrict-prototypes \
+-		  -ffunction-sections -fdata-sections -MD -DSTM32L0
++		  -ffunction-sections -fdata-sections -MD -DSTM32L0 \
++		  -DL0_FLASH_FNS_FROM_RAM=$(FLASH_FROM_RAM)
+ TGT_CFLAGS      += $(DEBUG_FLAGS)
+ 
+ ARFLAGS		= rcs
+diff --git a/lib/stm32/l0/flash.c b/lib/stm32/l0/flash.c
+index ec7280a..9e2b34f 100644
+--- a/lib/stm32/l0/flash.c
++++ b/lib/stm32/l0/flash.c
+@@ -93,13 +93,15 @@ Warning: this function MUST be executed from RAM.
+ @param[in] data Pointer data to write
+ */
+ 
+-void flash_program_half_page(uint32_t address, uint32_t *data, uint16_t page_size)
++__FROM_RAM void flash_program_half_page(uint32_t address, uint32_t *data, uint16_t page_size)
+ {
+ 	uint16_t i;
+ 
++	while (FLASH_SR & FLASH_SR_BSY);
++
+ 	FLASH_PECR |= FLASH_PECR_PROG | FLASH_PECR_FPRG;
+ 
+-	for (i = 0; i < ((page_size/2) * 4); i+=4, data++) {
++	for (i = 0; i < (page_size/2); i+=4, data++) {
+ 		MMIO32(address + i) = *data;
+ 	}
+ 
+@@ -151,7 +153,7 @@ memory. The information block is unaffected.
+ Warning: this function MUST be executed from RAM.
+ */
+ 
+-void flash_erase_all_pages(void)
++__FROM_RAM void flash_erase_all_pages(void)
+ {
+   
+ 	/* (1) Check if the read protection is not level 2 */
+@@ -173,7 +175,8 @@ void flash_erase_all_pages(void)
+ 	/* Should check that the memory was erased here */
+ 
+ 	/* (6) Lock the NVM by setting the PELOCK bit */
+-	flash_lock_pecr();
++	while (FLASH_SR & FLASH_SR_BSY);
++	FLASH_PECR |= FLASH_PECR_PELOCK;
+ 
+ 	/* Infinite loop */ 
+ 	while (1);
+@@ -191,7 +194,7 @@ Warning: this function MUST be executed from RAM.
+ @param[in] address Address of option byte from @ref flash_options.
+ */
+ 
+-void flash_erase_option_byte(uint32_t address)
++__FROM_RAM void flash_erase_option_byte(uint32_t address)
+ {
+ 	FLASH_PECR |= FLASH_PECR_ERASE;
+ 
+@@ -221,7 +224,7 @@ Warning: this function MUST be executed from RAM.
+ @param[in] data value to write
+ */
+ 
+-void flash_program_option_byte(uint32_t address, uint16_t data)
++__FROM_RAM void flash_program_option_byte(uint32_t address, uint16_t data)
+ {
+ 	MMIO32(address) = (uint32_t)((~data << 16) | data);
+ 

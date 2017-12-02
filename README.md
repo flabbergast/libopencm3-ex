@@ -10,6 +10,9 @@ They aren't too specific for the bat boards, except the usual pinout considerati
 
 The board presents itself as a serial port (CDC). It echoes back what it receives; toggling the LED after each received packet. Pressing the `PA1` button will print `hello, world` over this port.
 
+### usb_dfu
+
+L052 only. This is the DFU bootloader that I use on the bat boards with L052. More info about it on [the bat board] main page.
 
 ## General setup notes
 
