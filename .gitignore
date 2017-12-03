@@ -4,3 +4,4 @@
 *.hex
 *.bin
 *.map
+.gdb_config_bmp

@@ -22,6 +22,10 @@ The board presents itself as a serial port (CDC). It echoes back what it receive
 
 L052 only. This is the DFU bootloader that I use on the bat boards with L052. More info about it on [the bat board] main page.
 
+### i2c_eep
+
+Writes a few bytes, then reads a few bytes, from a standard I2C EEPROM. The bytes read are printed over USART (on PA9/PA10). Connections and address can be seen in the code (different setups for F0 and L0).
+
 ## General setup notes
 
 You are expected to a C compiler (for ARM) and some development tools (e.g. make and git) installed and ready to use. You can get a [toolchain from arm.com]; or use one provided by your system package manager (if you're on a normal system like some linux, bsd or mac). For the development tools, use your package manager.
