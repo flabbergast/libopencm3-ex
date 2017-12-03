@@ -6,6 +6,10 @@ They aren't too specific for the bat boards, except the usual pinout considerati
 
 ## Short summary for the examples
 
+### miniblink
+
+The onboard LED blinks. This is the classic miniblink from [libopencm3 examples], modified for the bat board, and the various MCUs I tested the board with (L052, F072, and the ubiquitous F103). Highights the code adjustments one needs for the different MCUs. Clock setup not implemented (except for F103, which just calls a library function, to test the crystal).
+
 ### blink_btn
 
 The onboard LED blinks, holding the button slows the frequency somewhat. The clocks are set up to 48MHz on F072, 32MHz on L052 (max).
