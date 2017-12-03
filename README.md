@@ -6,6 +6,10 @@ They aren't too specific for the bat boards, except the usual pinout considerati
 
 ## Short summary for the examples
 
+### blink_btn
+
+The onboard LED blinks, holding the button slows the frequency somewhat. The clocks are set up to 48MHz on F072, 32MHz on L052 (max).
+
 ### usb_cdcacm
 
 The board presents itself as a serial port (CDC). It echoes back what it receives; toggling the LED after each received packet. Pressing the `PA1` button will print `hello, world` over this port.
